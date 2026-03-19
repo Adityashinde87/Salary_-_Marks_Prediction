@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Predictor Pro</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&family=Rajdhani:wght@600&display=swap" rel="stylesheet">
+    <style>
+        :root { --neon: #00f2ff; --purp: #bc13fe; --dark: #020205; }
+        body { margin:0; background:var(--dark); color:white; font-family:'Rajdhani'; overflow:hidden; display:flex; justify-content:center; align-items:center; height:100vh; }
+        canvas { position:fixed; top:0; left:0; z-index:-1; }
+
+        .card { 
+            background:rgba(255,255,255,0.05); backdrop-filter:blur(25px); padding:40px; 
+            border-radius:35px; border:1px solid rgba(255,255,255,0.1); width:460px; 
+            text-align:center; box-shadow: 0 0 50px rgba(0,0,0,0.8);
+        }
+
+        h2 { font-family:'Orbitron'; color:var(--neon); letter-spacing:4px; margin-bottom:25px; text-shadow: 0 0 10px var(--neon); }
+        
+        input { 
+            width:100%; padding:18px; margin:10px 0; background:rgba(0,0,0,0.6); 
+            border:1px solid #333; border-radius:15px; color:white; font-size:22px; outline:none; transition:0.3s; 
+        }
+        input:focus { border-color:var(--neon); box-shadow:0 0 20px rgba(0,242,255,0.3); }
+
+        .tabs { display:flex; gap:12px; margin:20px 0; }
+        .t-btn { flex:1; padding:12px; border:none; background:rgba(255,255,255,0.05); color:#666; cursor:pointer; border-radius:12px; font-weight:bold; transition:0.3s; }
+        .t-btn.active { background:var(--purp); color:white; box-shadow:0 0 15px var(--purp); }
+
+        .btn { 
+            width:100%; padding:18px; border:none; background:linear-gradient(45deg, var(--purp), var(--neon)); 
+            color:white; font-size:20px; font-weight:bold; border-radius:15px; cursor:pointer; transition:0.4s; margin-top:15px; font-family:'Orbitron';
+        }
+        .btn:hover { transform:translateY(-3px); box-shadow:0 0 30px var(--neon); }
+
+        #res { 
+            margin-top:25px; font-size:24px; color:var(--neon); display:none; 
+            border:1px dashed var(--neon); padding:15px; border-radius:15px; 
+            background:rgba(0,242,255,0.05);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="bg"></canvas>
+    <div class="card">
+        <h2>AI PREDICTOR</h2>
+        <form id="p-form">
+            <div style="display:flex; gap:12px;">
+                <input type="text" name="u_name" placeholder="Name" required>
+                <input type="number" name="u_age" placeholder="Age" required style="width:110px;">
+            </div>
+            <div class="tabs">
+                <button type="button" class="t-btn active" onclick="setA('linear', this)">SALARY</button>
+                <button type="button" class="t-btn" onclick="setA('poly', this)">MARKS</button>
+            </div>
+            <input type="hidden" name="algo" id="algo" value="linear">
+            <div id="box-lin"><input type="number" step="any" name="val_linear" placeholder="Exp Years"></div>
+            <div id="box-poly" style="display:none;"><input type="number" step="any" name="val_poly" placeholder="Study Hours"></div>
+            <button type="submit" class="btn">PREDICT & SAVE</button>
+        </form>
+        <div id="res"></div>
+    </div>
+
+    <script>
+        function setA(a, b) {
+            $('.t-btn').removeClass('active'); $(b).addClass('active'); $('#algo').val(a);
+            if(a=='linear'){ $('#box-lin').show(); $('#box-poly').hide(); } 
+            else { $('#box-lin').hide(); $('#box-poly').show(); }
+            $('#res').hide();
+        }
+
+        $('#p-form').on('submit', function(e){
+            e.preventDefault();
+            $.post('/predict', $(this).serialize(), function(d){
+                if(d.success) $('#res').html("Hi " + d.user + "!<br>" + d.result).fadeIn();
+                else alert(d.result);
+            });
+        });
+
+        // Interactive Particle BG
+        const c = document.getElementById('bg'); const ctx = c.getContext('2d');
+        let pts = [];
+        window.onresize = () => { c.width=window.innerWidth; c.height=window.innerHeight; };
+        window.onresize();
+        for(let i=0; i<80; i++) pts.push({x:Math.random()*c.width, y:Math.random()*c.height, vx:(Math.random()-0.5)*0.5, vy:(Math.random()-0.5)*0.5});
+        function draw() {
+            ctx.clearRect(0,0,c.width,c.height); ctx.fillStyle="rgba(0,242,255,0.5)";
+            pts.forEach(p => {
+                p.x+=p.vx; p.y+=p.vy;
+                if(p.x<0 || p.x>c.width) p.vx*=-1; if(p.y<0 || p.y>c.height) p.vy*=-1;
+                ctx.beginPath(); ctx.arc(p.x, p.y, 1.5, 0, Math.PI*2); ctx.fill();
+            });
+            requestAnimationFrame(draw);
+        }
+        draw();
+    </script>
+</body>
+</html>
